@@ -1,5 +1,5 @@
 import pandas as pd
-from Bert中文情感分析模型 import Predict_emo  # 导入predict函数
+from Bert Sentiment Analysis import Predict_emo  # 导入predict函数
 from flask import Flask, request, jsonify, render_template
 from io import StringIO
 
