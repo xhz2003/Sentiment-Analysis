@@ -1,0 +1,62 @@
+import pandas as pd
+from Bert中文情感分析模型 import Predict_emo  # 导入predict函数
+from flask import Flask, request, jsonify, render_template
+from io import StringIO
+
+app = Flask(__name__)
+
+# 读取CSV文件并进行情感分析
+from io import StringIO
+
+# 读取CSV文件并进行情感分析
+def process_comments(file):
+    # 尝试使用多种编码格式读取文件
+    raw_data = file.stream.read()  # 读取文件内容
+
+    # 尝试不同的编码格式读取
+    try:
+        df = pd.read_csv(StringIO(raw_data.decode('utf-8')))  # 尝试utf-8编码
+    except UnicodeDecodeError:
+        try:
+            df = pd.read_csv(StringIO(raw_data.decode('gbk')))  # 如果utf-8失败，尝试gbk编码
+        except UnicodeDecodeError:
+            try:
+                df = pd.read_csv(StringIO(raw_data.decode('ascii')))  # 如果gbk失败，尝试ascii编码
+            except UnicodeDecodeError:
+                # 如果ascii也失败，使用ISO-8859-1
+                df = pd.read_csv(StringIO(raw_data.decode('ISO-8859-1')))
+    # 初始化计数器
+    positive_count = 0
+    negative_count = 0
+    # 遍历评论列进行情感分析
+    for sentence in df['评论']:
+        # 获取预测结果
+        predicted_class, predicted_score = Predict_emo(sentence)
+
+        # 判断评论是正向还是负向
+        if predicted_class == '正面':
+            positive_count += 1
+        elif predicted_class == '负面':
+            negative_count += 1
+
+    # 返回分析结果
+    return {
+        "positive_count": positive_count,
+        "negative_count": negative_count
+    }
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    return render_template('CS.html')
+# 路由：批量情感分析
+@app.route('/analyze', methods=['POST'])
+def analyze():
+    # 获取上传的 CSV 文件
+    file = request.files['file']
+    # 进行情感分析
+    result = process_comments(file)
+
+    # 返回JSON响应
+    return jsonify(result)
+
+if __name__ == '__main__':
+    app.run(debug=True)
